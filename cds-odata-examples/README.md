@@ -29,7 +29,7 @@ Furthermore, the build task runs the ```compileCds``` task, which compiles the `
   ```
 
 ### 2.1. Clean
-After runnint the example or e.g. in the case you did changes in the CDS model file, you can run the followign command to delete all generated files (CSN, EDMX) again:
+After you run the example or e.g. in the case you did changes in the CDS model file, you can run the following command to delete all generated files (CSN, EDMX) again and clean the project up again:
   ```
   ./gradlew clean
   ```
