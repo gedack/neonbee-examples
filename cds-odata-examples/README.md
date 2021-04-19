@@ -28,6 +28,12 @@ Furthermore, the build task runs the ```compileCds``` task, which compiles the `
   ./gradlew run
   ```
 
+### 2.1. Clean
+After runnint the example or e.g. in the case you did changes in the CDS model file, you can run the followign command to delete all generated files (CSN, EDMX) again:
+  ```
+  ./gradlew clean
+  ```
+
 ## 3. Use
 ### 3.1. BookstoreService Metadata
 Fetching the OData metadata of the BookstoreService as XML.
