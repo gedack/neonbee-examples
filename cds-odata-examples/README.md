@@ -3,17 +3,18 @@
 ## 1. Getting Started
 Set up your local build and development environment:
 
-1. Download and install Node.js (version 12 or higher): https://nodejs.org/en/download/
-2. Download and install Yarn: https://yarnpkg.com/en/docs/install
-3. Configure NPM & Yarn to use a (e.g. public) repository where the @sap/cds-dk node package is available e.g. https://registry.npmjs.org/
-4. Download and install Java 11 e.g. [SapMachine](https://github.com/SAP/SapMachine)
+1. Download and install Java 11 e.g. [SapMachine](https://github.com/SAP/SapMachine)
 
 ## 2. Build & Run
-1. Install the NPM dependencies in the local node_modules directory:
+1. Install Node.JS, NPM and required dependencies in the local node_modules directory:
   ```
-  npm install
-  yarn install
+  ./gradlew npmInstall
   ```
+This will download Node.js and NPM locally to this project. See ```build.gradle``` for details.
+Please note that you can alternatively use a custom installation and download and install Node.js (version 12 or higher)
+e.g. from https://nodejs.org/en/download/ and run ```npm install``` manually to download the required Node.js packages 
+as specified in the package.json.
+
 2. Execute the build:
   ```
   ./gradlew build

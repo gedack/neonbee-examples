@@ -52,7 +52,21 @@ dependencies {
     errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: error_prone_version
 }
 
+/* gradle-node-plugin configuration
+   https://github.com/srs/gradle-node-plugin/blob/master/docs/node.md
+
+   Task name pattern:
+   ./gradlew npm_<command> Executes an NPM command.
+*/
 node {
+    // Version of node to use.
+    version = '12.22.1'
+
+    // Version of npm to use.
+    npmVersion = '6.14.12'
+
+    // If true, it will download node using above parameters.
+    // If false, it will try to use globally installed node.
     download = true
 }
 
