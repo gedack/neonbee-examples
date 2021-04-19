@@ -16,21 +16,14 @@ import io.neonbee.entity.EntityWrapper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 
-/**
- * TODO: We can have a namespace in CDS, a namespace in the @NeonBeeDeployable annotation and a namespace in the
- * FullQualifiedName. How do they belong to each other?
+/*
+ * Please note that the declared namespace of the @NeonBeeDeployable annotation is only relevant for the EventBus communication. It has nothing to do with the CDS namesparce or the EDMX namespace (FullQualifiedName).
  */
-@NeonBeeDeployable // Load and register this verticle automatically via the @NeonBeeDeployable annotation
+@NeonBeeDeployable(namespace = "exampleEventBusNamespace") // Load and register this verticle automatically
 public class BooksEntityVerticle extends EntityVerticle {
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
-    /*
-     * Please note that this example uses strict URI mapping as you can see in the config file:
-     * working_dir/config/io.neonbee.internal.verticle.ServerVerticle.yaml That means that: - the OData metadata will be
-     * available at: http(s)://<host>:<port>/odata/BookstoreService/$metadata - the OData service will be available at:
-     * http(s)://<host>:<port>/odata/BookstoreService/Books
-     */
     public static final FullQualifiedName FQN = new FullQualifiedName("BookstoreService.Books");
 
     @Override

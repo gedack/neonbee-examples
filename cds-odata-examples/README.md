@@ -36,12 +36,13 @@ After you run the example or e.g. in the case you did changes in the CDS model f
   ```
 
 ## 3. Use
-### 3.1. BookstoreService Metadata
+### 3.1. BookstoreService
+#### 3.1.1. Metadata
 Fetching the OData metadata of the BookstoreService as XML.
 
 - Request:
   ```
-  curl -X GET -i -H "Accept: application/xml" http://localhost:8080/odata/BookstoreService/$metadata
+  curl -X GET -i -H 'Accept: application/xml' 'http://localhost:8080/odata/BookstoreService/$metadata'
   ```
 - Response
   ```xml
@@ -75,10 +76,10 @@ Fetching the OData metadata of the BookstoreService as XML.
   </edmx:Edmx>
   ```
 
-### 3.2. Fetch BookstoreService's Books as XML
+#### 3.1.2. Fetch BookstoreService's Books as XML
 - Request:
   ```
-  curl -X GET -i -H "Accept: application/xml" http://localhost:8080/odata/BookstoreService/Books
+  curl -X GET -i -H 'Accept: application/xml' 'http://localhost:8080/odata/BookstoreService/Books'
   ```
 - Response
   ```xml
@@ -128,10 +129,10 @@ Fetching the OData metadata of the BookstoreService as XML.
   </a:feed>ml version="1.0" encoding="UTF-8"?>
   ```
 
-### 3.2. Fetch BookstoreService's Books as JSON
+#### 3.1.3. Fetch BookstoreService's Books as JSON
 - Request:
   ```
-  curl -X GET -i -H "Accept: application/json" http://localhost:8080/odata/BookstoreService/Books
+  curl -X GET -i -H 'Accept: application/json' 'http://localhost:8080/odata/BookstoreService/Books'
   ```
 - Response
   ```json
@@ -161,14 +162,56 @@ Fetching the OData metadata of the BookstoreService as XML.
       ]
   }
   ```
-### 3.3. Use OData features
+
+### 3.2. PetstoreService
+#### 3.2.1. Metadata
+Fetching the OData metadata of the PetstoreService as XML.
+
+Please note that the PetstoreService.cds declares a CDS namespace. See comments in the related EntityVerticle ```src/main/java/io/neonbee/examples/cds/odata/verticles/PetsEntityVerticle.java``` for details.
+
+- Request:
+  ```
+  curl -X GET -i -H 'Accept: application/xml' 'http://localhost:8080/odata/ExampleCdsNamespace.PetstoreService/$metadata'
+  ```
+- Response
+  ```xml
+  HTTP/1.1 200 OK
+  OData-Version: 4.0
+  ETag: "0cd8067aea30fd3b986c710e28a2fe01"
+  Content-Type: application/xml
+  content-length: 413
+  X-Instance-Info: NeonBee-f9fe1fda-e821-48d0-a1bb-e1c46789ef4b
+  cache-control: no-cache, no-store, must-revalidate
+  pragma: no-cache
+  expires: 0
+
+  <?xml version="1.0" encoding="UTF-8"?>
+  <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+      <edmx:DataServices>
+          <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="ExampleCdsNamespace.PetstoreService">
+                <EntityType Name="Pets">
+                <Key>
+                    <PropertyRef Name="Id" />
+                </Key>
+                <Property Name="Id" Type="Edm.Int32" Nullable="false" />
+                <Property Name="Name" Type="Edm.String" />
+            </EntityType>
+            <EntityContainer Name="EntityContainer">
+                <EntitySet Name="Pets" EntityType="ExampleCdsNamespace.PetstoreService.Pets" IncludeInServiceDocument="false" />
+            </EntityContainer>
+          </Schema>
+      </edmx:DataServices>
+  </edmx:Edmx>
+  ```
+
+### 3.4. Use OData features
 - Order by Author ascending
   ```
-  curl -X GET -i -H "Accept: application/json" "http://localhost:8080/odata/BookstoreService/Books?$orderby=Author%20asc"
+  curl -X GET -i -H 'Accept: application/json' 'http://localhost:8080/odata/BookstoreService/Books?$orderby=Author%20asc'
   ```
 - Filter by Author 'Bernd The Bread'
   ```
-  curl -X GET -i -H "Accept: application/json" "http://localhost:8080/odata/BookstoreService/Books?$filter=Author%20eq%20%27Bernd%20The%20Bread%27"  ```
+  curl -X GET -i -H 'Accept: application/json' 'http://localhost:8080/odata/BookstoreService/Books?$filter=Author%20eq%20%27Bernd%20The%20Bread%27'
   ```
 - ... and many more. See NeonBee's OData documentation for details.
 
