@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+if (!JavaVersion.current().java11Compatible) {
+    throw new IllegalStateException("The java version used is not the expected version (Java 11).")
+}
+
+rootProject.name = "cds-odata-examples"

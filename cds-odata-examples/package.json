@@ -1,0 +1,18 @@
+{
+  "name": "@neonbee/cds-odata-examples",
+  "version": "0.0.0-SNAPSHOT",
+  "description": "NeonBee CDS OData Examples",
+  "keywords": [
+    "NeonBee",
+    "CDS",
+    "OData",
+    "Example"
+  ],
+  "private": true,
+  "engines": {
+    "node": ">= 12"
+  },
+  "dependencies": {
+    "@sap/cds-dk": "4.0.7"
+  }
+}

@@ -1,0 +1,388 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'eclipse'
+    id 'jacoco'
+    id 'pmd'
+    id 'com.github.spotbugs' version '4.6.0'
+    id 'com.diffplug.spotless' version '5.8.2'
+    id 'com.github.ksoichiro.console.reporter' version '0.6.2'
+    id 'se.bjurr.violations.violations-gradle-plugin' version '1.48'
+    id 'net.ltgt.errorprone' version '1.3.0'
+    id "com.github.node-gradle.node" version "3.0.1"
+}
+
+group = 'io.neonbee.examples.cds.odata'
+version = '0.0.0-SNAPSHOT' 
+sourceCompatibility = 11
+
+application {
+    mainClassName = "${group}.Application"
+}
+
+task initWrapper(type: Wrapper) {
+    gradleVersion = '6.8.3'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    def neonbee_version = '0.4.0'
+    def jupiter_version = '5.7.0'
+    def junit_platform_version = '1.7.0'
+    def truth_version = '1.1.2'
+    def mockito_version = '3.7.7'
+    def error_prone_version = '2.3.3'
+
+    // Dependencies
+    implementation group: 'io.neonbee', name: 'neonbee-core', version: neonbee_version
+
+    // Test dependencies
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: mockito_version
+    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
+    testImplementation group: 'com.google.truth', name: 'truth', version: truth_version
+    testImplementation group: 'com.google.truth.extensions', name: 'truth-java8-extension', version: truth_version
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
+    testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: junit_platform_version
+
+    // Gradle plugin dependencies
+    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: error_prone_version
+}
+
+node {
+    download = true
+}
+
+spotless {
+    java {
+        encoding 'UTF8'
+        trimTrailingWhitespace()
+        removeUnusedImports()
+        endWithNewline()
+        importOrderFile("${rootDir}/gradle/spotless/eclipse-imports.importorder")
+        eclipse('4.17.0').configFile "${rootDir}/gradle/spotless/eclipse-formatter.xml"
+        custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
+    }
+}
+spotlessCheck.dependsOn(spotlessApply)
+
+test {
+    if (!DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
+        systemProperties = [
+            'junit.jupiter.execution.parallel.enabled' : 'true',
+            'junit.jupiter.execution.parallel.mode.default' : 'concurrent',
+            'junit.jupiter.execution.parallel.mode.classes.default' : 'concurrent'
+        ]
+    }
+
+    // Later, if the violations plugin supports JUNIT5 we have to ignore the issues
+    // during SpotBugs run, because the violations plugin will display the issues
+    // and let the build fail later. But currently we have to fail directly.
+    ignoreFailures = false
+    dependsOn('spotlessCheck', 'cleanTest')
+    useJUnitPlatform()
+    testLogging {
+        events = ['passed', 'skipped', 'failed', 'standardOut', 'standardError']
+        exceptionFormat = TestExceptionFormat.FULL // Full display of exceptions
+        // Don't show complete standard out and standard error of the tests on the console.
+        // Show only verbose output for failing tests.
+        showStandardStreams = false
+    }
+    reports {
+        junitXml {
+            enabled = true
+            destination = file("${buildDir}/reports/junit/xml")
+        }
+        html {
+            enabled = true
+            destination = file("${buildDir}/reports/junit/html")
+        }
+    }
+    finalizedBy jacocoTestReport
+}
+
+task violations(type: ViolationsTask) {
+    maxReporterColumnWidth = 10 // 0 means "no limit"
+    maxRuleColumnWidth = 50
+    maxSeverityColumnWidth = 10
+    maxLineColumnWidth = 10
+    maxMessageColumnWidth = 200
+    minSeverity = 'INFO' // INFO, WARN or ERROR
+    detailLevel = 'VERBOSE' // PER_FILE_COMPACT, COMPACT or VERBOSE
+    maxViolations = 0 // Fail the build if total number of found violations is higher
+    printViolations = true
+
+    // Formats are listed here: https://github.com/tomasbjerre/violations-lib
+    violations = [
+        ['FINDBUGS', buildDir.path, ".*/build/reports/spotbugs/.*\\.xml\$",'Spotbugs'],
+        ['JUNIT', buildDir.path, ".*/build/reports/junit/xml/.*\\.xml\$",'JUnit'],
+        ['PMD', buildDir.path, ".*/build/reports/pmd/.*\\.xml\$", 'PMD'],
+        ['CHECKSTYLE', buildDir.path, ".*/build/reports/checkstyle/.*\\.xml\$", 'Checkstyle']
+    ]
+}
+check.finalizedBy violations
+test.finalizedBy violations
+build.finalizedBy violations
+
+spotbugs {
+    // Ignore the issues during SpotBugs run, because the violations plugin
+    // will display the issues and let the build fail later.
+    ignoreFailures = true
+    toolVersion = '4.2.1'
+    effort = 'max'
+    reportLevel = 'medium'
+}
+
+spotbugsMain {
+    // Only one report can be configured at a time.
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+compileJava.finalizedBy spotbugsMain // Checks src/main/java
+
+spotbugsTest.enabled = true
+spotbugsTest {
+    // Only one report can be configured at a time.
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+compileTestJava.finalizedBy spotbugsTest // Checks src/test/java
+
+pmd {
+    ignoreFailures = true
+    sourceSets = [sourceSets.main, sourceSets.test]
+    ruleSets = []
+    ruleSetFiles = files('${rootDir}/gradle/pmd/ruleset.xml')
+    toolVersion = '6.32.0'
+}
+
+pmdMain {
+    ruleSetFiles = files("${rootDir}/gradle/pmd/rulesetMain.xml", "${rootDir}/gradle/pmd/customRuleset.xml")
+}
+compileJava.finalizedBy pmdMain
+
+pmdTest {
+    ruleSetFiles = files("${rootDir}/gradle/pmd/rulesetTest.xml", "${rootDir}/gradle/pmd/customRuleset.xml")
+}
+compileTestJava.finalizedBy pmdTest
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}
+
+
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.internal.logging.events.OutputEvent
+import org.gradle.internal.logging.events.OutputEventListener
+import org.gradle.internal.logging.LoggingOutputInternal
+tasks.withType(Javadoc) {
+    def exceptions = []
+    doFirst {
+        gradle.services.get(LoggingOutputInternal).addOutputEventListener(new OutputEventListener() {
+            void onOutput(OutputEvent event) {
+                if (event.toString() =~ " warning: ") {
+                    exceptions << "Javadoc warning: ${event.toString()}"
+                }
+            }
+        })
+    }
+    doLast {
+         if (exceptions.size() > 0) {
+            throw new GradleException(String.join('\n', exceptions))
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.allErrorsAsWarnings = true
+    options.errorprone.disableWarningsInGeneratedCode = true
+    options.failOnError = true
+    options.compilerArgs << '-Xlint:deprecation'
+    options.errorprone.errorproneArgs.add('-Xep:TypeParameterUnusedInFormals:OFF')
+}
+
+import org.gradle.internal.logging.events.OutputEvent
+import org.gradle.internal.logging.events.OutputEventListener
+import org.gradle.internal.logging.LoggingOutputInternal
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import se.bjurr.violations.gradle.plugin.ViolationsTask
+
+tasks.withType(JavaCompile) {
+    def exceptions = []
+    doFirst {
+        gradle.services.get(LoggingOutputInternal).addOutputEventListener(new OutputEventListener() {
+            void onOutput(OutputEvent event) {
+                if (event.toString() =~ ': warning:') {
+                    exceptions << "Error-Prone warning: ${event.toString()}"
+                }
+            }
+        })
+    }
+    doLast {
+        // Currently it looks like that there are 2 false positives. Usually the following size should be set to zero.
+        if (exceptions.size() > 2) {
+            throw new GradleException(String.join('\n', exceptions))
+        }
+    }
+}
+
+jacoco {
+    toolVersion = '0.8.5'
+    reportsDir = file("${buildDir}/reports/jacoco")
+}
+
+consoleReporter {
+    jacoco {
+        // Set this property to false if you don't need JaCoCo report.
+        // Even if this is true, reporting will not work without applying jacoco plugin.
+        enabled true
+
+        // Set this property to false if you want to see console report always.
+        onlyWhenCoverageTaskExecuted false
+
+        // Set this property to false if you want to see console report
+        // just after each project's jacocoTestReport task.
+        // If set to true, all reports will be shown at the end of builds.
+        reportAfterBuildFinished true
+
+        // Set this property to true if you want to treat a lack of the minimum coverage as an build error.
+        // This property sees thresholdError property, and if the coverage has fallen below this value
+        // the plugin will throw an exception to cause a build error.
+        // If you set this to true, you should also set thresholdError property.
+        failIfLessThanThresholdError true
+
+        // Set this property to false if you don't like this plugin automatically changing some
+        // property of jacoco plugin.
+        // If this is set to true, the plugin will set some properties of jacoco plugin
+        // to calculate coverage.
+        autoconfigureCoverageConfig true
+
+        // Set this property to your custom JacocoReport type task name, if you need.
+        coverageTaskName 'jacocoTestReport'
+
+        // Set this property to your JaCoCo report XML file.
+        // Default is null, which means
+        // ${project.buildDir}/reports/jacoco/test/jacocoTestReport.xml
+        // will be parsed.
+        reportFile project.file("${buildDir}/reports/jacoco/xml/jacoco.xml")
+
+        // Set this property to a certain C0 coverage percentage.
+        // When the coverage is greater than or equals to this value,
+        // the coverage will be shown with green color.
+        thresholdFine 85
+
+        // Set this property to a certain C0 coverage percentage.
+        // When the coverage is greater than or equals to this value,
+        // the coverage will be shown with yellow color.
+        // (When the coverage is less than this value, result will be red.)
+        thresholdWarning 80
+
+        // Set this property to a certain C0 coverage percentage.
+        // When the coverage is less than this value and
+        // failIfLessThanThresholdError property is set to true,
+        // the build will fail.
+        thresholdError 0
+
+        // Set this property if you want to customize build error message
+        // when you use 'failIfLessThanThresholdError' feature.
+        brokenCoverageErrorMessage 'Code Coverage has fallen below the defined threshold.'
+
+        // Set this property to false if you don't need colorized output.
+        colorEnabled true
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        csv {
+            enabled true
+            destination file("${buildDir}/reports/jacoco/csv/jacoco.csv")
+        }
+        xml {
+            enabled true
+            destination file("${buildDir}/reports/jacoco/xml/jacoco.xml")
+        }
+        html {
+            enabled true
+            destination file("${buildDir}/reports/jacoco/html")
+        }
+    }
+
+    // Display the code coverage every time after the jacocoTestReport run
+    finalizedBy project.tasks.reportCoverage
+}
+
+// Delete duplicate (temporary) files
+task deleteTemporaryFiles(type: Delete) {
+    delete fileTree('working_dir/models/') {
+        include '*.json', '*.xml'
+    }
+}
+clean.dependsOn deleteTemporaryFiles
+
+// Clean working_dir/models directory
+task cleanWorkingDirModelsDirectory(type: Delete) {
+    delete fileTree('working_dir/models/') {
+        include '*.csn', '*.edmx'
+    }
+}
+clean.dependsOn cleanWorkingDirModelsDirectory
+
+/*
+ * Read all CDS files from the ```working_dir/models``` directory
+ */
+def cdsFiles = project.fileTree(dir: project.projectDir, include: 'working_dir/models/*.cds').collect { it.getName().substring(0, it.getName().lastIndexOf(".")) }
+
+/*
+ * Register a "compile CDS to EDMX format" task for each found CDS file
+ */
+task compileEdmx(type: NodeTask) {
+    script = project.file('node_modules/@sap/cds-dk/bin/cds.js')
+    args = ['compile', 'working_dir/models/', '--service', 'all', '--to', 'edmx-v4', '--dest', 'working_dir/models']
+}
+
+/*
+ * Create a "compile CDS to CSN" task for each found CDS file
+ */
+cdsFiles.each {
+    def cdsTaskArgs = ['compile', "working_dir/models/${it}.cds", '--service', 'all', '--to', 'json', '--dest', './']
+    project.tasks.register("compile${it}Csn", NodeTask) {
+        dependsOn("compileEdmx")
+        script = project.file('node_modules/@sap/cds-dk/bin/cds.js')
+        args = cdsTaskArgs
+    }
+}
+
+/*
+ * The "compile CDS" task runs the "compile CDS to CSN" tasks and renames the working_dir/models/*.json files
+ * to working_dir/models/*.csn and the working_dir/models/*.xml files to working_dir/models/*.edmx.
+ */
+task compileCds(type: Copy) {
+    // Get all the "compile CDS to CSN" tasks and run it first
+    cdsFiles.collect { dependsOn('compile' + it + 'Csn') }
+
+    // Copy the compiled files and change to the corrext file extension (xml -> edmx, json -> csn)
+    from('working_dir/models/')
+    include('*.json', '*.xml')
+    rename { String filename ->
+        if (filename.endsWith('.json')) {
+            return filename.substring(0, filename.lastIndexOf('.json')).concat('.csn')
+        } else if (filename.endsWith('.xml')) {
+            return filename.substring(0, filename.lastIndexOf('.xml')).concat('.edmx')
+        } else return filename
+    }
+    into('working_dir/models/')
+}
+compileCds.finalizedBy deleteTemporaryFiles
+build.dependsOn compileCds

@@ -1,0 +1,7 @@
+* text eol=lf
+*.jar -text
+*.bat -text
+
+# .bat files are explicitly windows files and should use crlf
+# https://docs.github.com/en/github/getting-started-with-github/configuring-git-to-handle-line-endings
+*.bat text eol=crlf
