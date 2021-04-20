@@ -1,0 +1,28 @@
+{
+  "definitions": {
+    "BookstoreService": {
+      "@source": "working_dir/models/BookstoreService.cds",
+      "kind": "service"
+    },
+    "BookstoreService.Books": {
+      "kind": "entity",
+      "elements": {
+        "Id": {
+          "key": true,
+          "type": "cds.Integer"
+        },
+        "Title": {
+          "type": "cds.String"
+        },
+        "Author": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v2.1.6",
+    "flavor": "inferred"
+  },
+  "$version": "2.0"
+}
