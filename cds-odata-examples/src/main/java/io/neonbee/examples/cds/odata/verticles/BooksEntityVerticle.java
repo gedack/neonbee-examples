@@ -16,8 +16,9 @@ import io.neonbee.entity.EntityWrapper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 
-/*
- * Please note that the declared namespace of the @NeonBeeDeployable annotation is only relevant for the EventBus communication. It has nothing to do with the CDS namesparce or the EDMX namespace (FullQualifiedName).
+/**
+ * Please note that the declared namespace of the @NeonBeeDeployable annotation is only relevant for the EventBus
+ * communication. It has nothing to do with the CDS namespace or the EDMX namespace (FullQualifiedName).
  */
 @NeonBeeDeployable(namespace = "exampleEventBusNamespace") // Load and register this verticle automatically
 public class BooksEntityVerticle extends EntityVerticle {
