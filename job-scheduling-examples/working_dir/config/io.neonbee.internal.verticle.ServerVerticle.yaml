@@ -10,7 +10,7 @@ config:
   # sets whether to use application-layer protocol negotiation or not, defaults to true
   useAlpn: true
   # one of: none, local or clustered, defaults to none
-  sessionHandling: none
+  sessionHandling: NONE
   # the name of the session cookie, defaults to neonbee-web.session
   sessionCookieName: neonbee-web.session
 
@@ -22,7 +22,7 @@ config:
   compressionLevel: 1
 
   # one of: request_header, generate_uuid, defaults to request_header
-  correlationStrategy: request_header
+  correlationStrategy: REQUEST_HEADER
 
   # the number of seconds before the router timeout applies, defaults to 30
   timeout: 30
@@ -37,38 +37,40 @@ config:
   # specific endpoint configuration, defaults to the object seen below
   endpoints:
     # provides a OData V4 compliant endpoint, for accessing entity verticle data
-    odata:
+    - type: io.neonbee.endpoint.odatav4.ODataV4Endpoint
       # enable the OData endpoint, defaults to true
       enabled: true
       # the base path to map this endpoint to, defaults to /odata/
       basePath: /odata/
-      # namespace and service name URI mapping (strict, or loose based on CDS)
-      uriConversion: strict
+      # endpoint specific authentication chain, defaults to null and using the default authentication chain
+      authenticationChain: ~
+      # namespace and service name URI mapping (STRICT, or LOOSE based on CDS)
+      uriConversion: STRICT
 
     # provides a REST endpoint (JSON, text, binary), for accessing data verticles
-    raw:
+    - type: io.neonbee.endpoint.raw.RawEndpoint
       # enable the raw endpoint, defaults to true
       enabled: true
       # the base path to map this endpoint to, defaults to /raw/
       basePath: /raw/
-      # whether or not to expose hidden verticles, defaults to false
-      exposeHiddenVerticles: false
+      # endpoint specific authentication chain, defaults to null and using the default authentication chain
+      authenticationChain: ~
 
     # provides an Prometheus scraping endpoint for Micrometer.io metrics
-    metrics:
+    - type: io.neonbee.endpoint.metrics.MetricsEndpoint
       # enable the metrics endpoint, defaults to true
       enabled: true
       # the base path to map this endpoint to, defaults to /metrics/
       basePath: /metrics/
 
-  # authentication chain, defaults to an empty array (no authentication), use:
-#  authenticationChain:
-    # any of: basic, digest, jwt, oauth2, redirect, mandatory attribute
-#    - type: string
-      # ... more authentication handler options (see the specific handler implementations)
+    # default authentication chain, defaults to an empty array (no authentication), use:
+    #authenticationChain:
+        # any of: BASIC, DIGEST, JWT, OAUTH2, REDIRECT, mandatory attribute
+     # - type: string
+        # ... more authentication handler options (see the specific handler implementations)
 
-      # the authentication provider to be set for this handler
-#      provider:
-        # the authentication provider to be set for this handler# any of: htdigest, htpasswd, jdbc, jwt, mongo, oauth2, shiro, mandatory attribute
-#        type: string
-        # ... more authentication provider options (see the specific provider implementations)
+        # the authentication provider to be set for this handler
+      #  provider:
+            # the authentication provider to be set for this handler# any of: HTDIGEST, HTPASSWD, JDBC, JWT, MONGO, OAUTH2, mandatory attribute
+       #     type: string
+            # ... more authentication provider options (see the specific provider implementations)
